@@ -29,10 +29,12 @@ jobs:
       - name: Install MAUI iOS workload
         run: dotnet workload install maui-ios
 
-      # Build de iOS app
+      - name: Restore dependencies
+        run: dotnet restore Grocery.App/Grocery.App.csproj
+
       - name: Build iOS
         run: dotnet build Grocery.App/Grocery.App.csproj -f net8.0-ios --configuration Release --no-restore
 
-      # Run unit tests (alle TestCore tests draaien gewoon op net8.0!)
       - name: Run unit tests
         run: dotnet test TestCore/TestCore.csproj --configuration Release --no-build
+
