@@ -36,7 +36,7 @@ jobs:
 
       # Build per platform
       - name: Build iOS
-        run: dotnet build Grocery.App/Grocery.App.csproj -f net8.0-ios --configuration Release --no-restore
+        run: dotnet build Grocery.App/Grocery.App.csproj -f net8.0-ios --configuration Release
 
       # Run unit tests per platform (gebruik de juiste target framework als tests specifiek zijn)
       - name: Run unit tests iOS
