@@ -1,0 +1,45 @@
+name: MAUI Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - infra/runner-toevoegen
+      - develop
+      - 'feature/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      # Installeer workloads per platform
+      - name: Install MAUI iOS workload
+        run: dotnet workload install ios
+
+      # Restore dependencies (geef expliciet het projectbestand op)
+      - name: Restore iOS
+        run: dotnet restore Grocery.App/Grocery.App.csproj
+
+      # Build per platform
+      - name: Build iOS
+        run: dotnet build Grocery.App/Grocery.App.csproj -f net8.0-ios --configuration Release --no-restore
+
+      # Run unit tests per platform (gebruik de juiste target framework als tests specifiek zijn)
+      - name: Run unit tests iOS
+        run: dotnet test TestCore/TestCore.csproj --configuration Release
+
+ 
