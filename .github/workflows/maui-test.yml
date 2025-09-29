@@ -26,13 +26,12 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # Installeer workloads per platform
-      - name: Install MAUI iOS workload
-        run: dotnet workload install ios
+      - name: Build iOS
+        run: dotnet build Grocery.App/Grocery.App.csproj -f net8.0-ios --configuration Release --no-restore
 
-      # Restore dependencies (geef expliciet het projectbestand op)
-      - name: Restore iOS
-        run: dotnet restore Grocery.App/Grocery.App.csproj
+      - name: Run unit tests
+        run: dotnet test TestCore/TestCore.csproj --configuration Release
+
 
       # Build per platform
       - name: Build iOS
