@@ -52,12 +52,15 @@ namespace Grocery.Core.Services
         public List<BestSellingProducts> GetBestSellingProducts(int topX = 5)
         {
             var allItems = _groceriesRepository.GetAll();
-            
+            var productIds = allItems.Select(i => i.ProductId).Distinct().ToList();
+            var allProducts = _productRepository.GetByIds(productIds) // <-- nieuwe methode in repo
+                .ToDictionary(p => p.Id);
+
             var grouped = allItems
                 .GroupBy(i => i.ProductId)
                 .Select(g =>
                 {
-                    var product = _productRepository.Get(g.Key);
+                    allProducts.TryGetValue(g.Key, out var product);
                     return new
                     {
                         ProductId = g.Key,
@@ -69,8 +72,8 @@ namespace Grocery.Core.Services
                 .OrderByDescending(x => x.NrOfSells)
                 .Take(topX)
                 .ToList();
-            
-            var result = grouped
+
+            return grouped
                 .Select((x, index) => new BestSellingProducts(
                     x.ProductId,
                     x.ProductName,
@@ -79,8 +82,6 @@ namespace Grocery.Core.Services
                     index + 1
                 ))
                 .ToList();
-
-            return result;
         }
 
 
