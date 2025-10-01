@@ -49,11 +49,17 @@ namespace Grocery.Core.Services
             return _groceriesRepository.Update(item);
         }
 
+        /// <summary>
+        /// Haalt de best verkopende producten op gebaseerd op het aantal keren dat ze in boodschappenlijsten voorkomen.
+        /// Groepeert alle grocery list items per product, telt het aantal verkopen, en sorteert op populariteit.
+        /// </summary>
+        /// <param name="topX">Het aantal top producten dat terug gegeven moet worden (standaard 5)</param>
+        /// <returns>Een lijst van BestSellingProducts gesorteerd op aantal verkopen met ranking</returns>
         public List<BestSellingProducts> GetBestSellingProducts(int topX = 5)
         {
             var allItems = _groceriesRepository.GetAll();
             var productIds = allItems.Select(i => i.ProductId).Distinct().ToList();
-            var allProducts = _productRepository.GetByIds(productIds) // <-- nieuwe methode in repo
+            var allProducts = _productRepository.GetByIds(productIds)
                 .ToDictionary(p => p.Id);
 
             var grouped = allItems
@@ -66,10 +72,10 @@ namespace Grocery.Core.Services
                         ProductId = g.Key,
                         ProductName = product?.Name ?? "Onbekend product",
                         Stock = product?.Stock ?? 0,
-                        NrOfSells = g.Count()
+                        TotalAmountSold = g.Sum(item => item.Amount) 
                     };
                 })
-                .OrderByDescending(x => x.NrOfSells)
+                .OrderByDescending(x => x.TotalAmountSold)
                 .Take(topX)
                 .ToList();
 
@@ -78,7 +84,7 @@ namespace Grocery.Core.Services
                     x.ProductId,
                     x.ProductName,
                     x.Stock,
-                    x.NrOfSells,
+                    x.TotalAmountSold,
                     index + 1
                 ))
                 .ToList();
