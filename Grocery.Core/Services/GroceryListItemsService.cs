@@ -57,17 +57,11 @@ namespace Grocery.Core.Services
         /// <returns>Een lijst van BestSellingProducts gesorteerd op aantal verkopen met ranking</returns>
         public List<BestSellingProducts> GetBestSellingProducts(int topX = 5)
         {
-            // Haal alle grocery list items op
             var allItems = _groceriesRepository.GetAll();
-            
-            // Verzamel alle unieke product IDs
             var productIds = allItems.Select(i => i.ProductId).Distinct().ToList();
-            
-            // Haal alle producten op en zet ze in een dictionary voor snelle lookup
             var allProducts = _productRepository.GetByIds(productIds)
                 .ToDictionary(p => p.Id);
 
-            // Groepeer items per product en tel het aantal verkopen
             var grouped = allItems
                 .GroupBy(i => i.ProductId)
                 .Select(g =>
@@ -78,21 +72,20 @@ namespace Grocery.Core.Services
                         ProductId = g.Key,
                         ProductName = product?.Name ?? "Onbekend product",
                         Stock = product?.Stock ?? 0,
-                        NrOfSells = g.Count() // Tel hoeveel keer dit product voorkomt
+                        TotalAmountSold = g.Sum(item => item.Amount) 
                     };
                 })
-                .OrderByDescending(x => x.NrOfSells) // Sorteer van meest naar minst verkocht
-                .Take(topX) // Neem alleen de top X
+                .OrderByDescending(x => x.TotalAmountSold)
+                .Take(topX)
                 .ToList();
 
-            // Maak BestSellingProducts objecten met ranking (1 = meest verkocht)
             return grouped
                 .Select((x, index) => new BestSellingProducts(
                     x.ProductId,
                     x.ProductName,
                     x.Stock,
-                    x.NrOfSells,
-                    index + 1 // Ranking begint bij 1
+                    x.TotalAmountSold,
+                    index + 1
                 ))
                 .ToList();
         }
