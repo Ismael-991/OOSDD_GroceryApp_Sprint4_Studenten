@@ -49,10 +49,54 @@ namespace Grocery.Core.Services
             return _groceriesRepository.Update(item);
         }
 
+        /// <summary>
+        /// Haalt de best verkopende producten op gebaseerd op het aantal keren dat ze in boodschappenlijsten voorkomen.
+        /// Groepeert alle grocery list items per product, telt het aantal verkopen, en sorteert op populariteit.
+        /// </summary>
+        /// <param name="topX">Het aantal top producten dat terug gegeven moet worden (standaard 5)</param>
+        /// <returns>Een lijst van BestSellingProducts gesorteerd op aantal verkopen met ranking</returns>
         public List<BestSellingProducts> GetBestSellingProducts(int topX = 5)
         {
-            throw new NotImplementedException();
+            // Haal alle grocery list items op
+            var allItems = _groceriesRepository.GetAll();
+            
+            // Verzamel alle unieke product IDs
+            var productIds = allItems.Select(i => i.ProductId).Distinct().ToList();
+            
+            // Haal alle producten op en zet ze in een dictionary voor snelle lookup
+            var allProducts = _productRepository.GetByIds(productIds)
+                .ToDictionary(p => p.Id);
+
+            // Groepeer items per product en tel het aantal verkopen
+            var grouped = allItems
+                .GroupBy(i => i.ProductId)
+                .Select(g =>
+                {
+                    allProducts.TryGetValue(g.Key, out var product);
+                    return new
+                    {
+                        ProductId = g.Key,
+                        ProductName = product?.Name ?? "Onbekend product",
+                        Stock = product?.Stock ?? 0,
+                        NrOfSells = g.Count() // Tel hoeveel keer dit product voorkomt
+                    };
+                })
+                .OrderByDescending(x => x.NrOfSells) // Sorteer van meest naar minst verkocht
+                .Take(topX) // Neem alleen de top X
+                .ToList();
+
+            // Maak BestSellingProducts objecten met ranking (1 = meest verkocht)
+            return grouped
+                .Select((x, index) => new BestSellingProducts(
+                    x.ProductId,
+                    x.ProductName,
+                    x.Stock,
+                    x.NrOfSells,
+                    index + 1 // Ranking begint bij 1
+                ))
+                .ToList();
         }
+
 
         private void FillService(List<GroceryListItem> groceryListItems)
         {

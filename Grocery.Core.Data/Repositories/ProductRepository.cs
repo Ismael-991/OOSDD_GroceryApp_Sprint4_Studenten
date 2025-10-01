@@ -41,5 +41,10 @@ namespace Grocery.Core.Data.Repositories
             product.Id = item.Id;
             return product;
         }
+        public List<Product> GetByIds(IEnumerable<int> ids)
+        {
+            var idSet = new HashSet<int>(ids);
+            return GetAll().Where(p => idSet.Contains(p.Id)).ToList();
+        }
     }
 }
